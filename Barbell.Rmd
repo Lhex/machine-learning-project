@@ -1,0 +1,116 @@
+---
+title: "Machine Learning on Barbell Lifting"
+author: "Xiuren Yap"
+date: "23 September 2015"
+output: html_document
+---
+
+```{r globalOptions, include = FALSE, echo = FALSE}
+#Global Options Setting
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+```{r libraries}
+library(caret)
+library(randomForest)
+library(rpart)
+library(rpart.plot)
+```
+
+Firstly, getting data from the source and reading them.
+
+```{r gettingFiles}
+if(!file.exists("pml-training.csv")){
+    download.file("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv", destfile = "pml-training.csv")
+}
+
+if(!file.exists("pml-testing.csv")){
+    download.file("https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv", destfile = "pml-testing.csv")
+}
+
+training <- read.csv(file = "pml-training.csv")
+testing <- read.csv(file = "pml-testing.csv")
+```
+
+Next, both training and testing data has to be cleaned, since there are many NA values and they will affect the process.
+
+```{r cleaningData}
+#firstly, extract classe data so that it will not be lost
+classe <- training$classe
+
+#non-numerical values, user, time data will be removed, as they are not
+#used to predict classe. Na values are also removed.
+
+training <- subset(training, select = -c(1:7))
+training <- training[, colSums(is.na(training)) == 0]
+testing <- subset(testing, select = -c(1:7))
+testing <- testing[, colSums(is.na(testing)) == 0]
+
+#Finally, make sure all values in the data are numeric, and insert
+#back the classe
+
+training <- training[, sapply(training, is.numeric)]
+training$classe <- classe
+
+testing <- testing[, sapply(testing, is.numeric)]
+```
+
+Now that the data are cleaned, I will further break the training set into subtraining and subtesting sets, so as to perform a validation before performing the prediction on the test set of 20 observations.
+
+```{r createSubsets}
+inTrain = createDataPartition(training$classe, p = 0.7, list = FALSE)
+subtraining <- training[inTrain, ]
+subtesting <- training[-inTrain, ]
+```
+
+The subtraining set will now be used to do model fitting, while the subtesting set will be used for validation of the model fit later.
+
+```{r modelFitting}
+modFit <- train(classe ~ ., data = subtraining, method = "rf", prox = TRUE)
+modFit
+```
+
+As can be seen from the table above, the accuracy of the randomforest method is quite accurate. But let's test it on the testing set that we have.
+
+```{r subtesting}
+pred <- predict(modFit, subtesting)
+CM <- confusionMatrix(subtesting$classe, pred)
+```
+
+Performing the prediction on the testing set, and looking at the confusion matrix, the accuracy of the model is `CM$overall[1]`%.
+
+##Prediction of Original Test Set
+
+Before predicting, the column for problem_id was removed, since it will affect negatively the prediction.
+
+```{r prediction}
+finalPrediction <- predict(modFit, testing[ , -length(names(testing))])
+finalPrediction
+```
+
+#Appendix
+
+```{r tree, fig.height = 10, fig.width = 10}
+tree <- rpart(classe ~ ., data = training, method = "class")
+prp(tree)
+```
+
+```{r appendix, echo=FALSE, eval=FALSE}
+# trCarlitos <- training[ training$user_name == "carlitos",]
+# # trCarlitos$classe <- as.factor(trCarlitos$classe)
+# trCarlitos <- subset(trCarlitos, select = -c(1:7))
+# trCarlitos <- trCarlitos[, colSums(is.na(trCarlitos))==0]
+# classe <- trCarlitos$classe
+# trCarlitos <- trCarlitos[, sapply(trCarlitos, is.numeric)]
+# trCarlitos$classe <- classe
+# 
+# inTrain = createDataPartition(trCarlitos$classe, p = 0.7, list = FALSE)
+# carlitosTraining = trCarlitos[ inTrain,]
+# carlitosTesting = trCarlitos[-inTrain,]
+# 
+# modFit <- train(classe ~ ., data = carlitosTraining, method = "rf", prox = TRUE)
+# modFit
+# 
+# pred <- predict(modFit, carlitosTesting)
+# table(pred, carlitosTesting$classe)
+# confusionMatrix(carlitosTesting$classe, pred)
+```
