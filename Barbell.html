@@ -107,7 +107,7 @@ testing &lt;- testing[, sapply(testing, is.numeric)]</code></pre>
 subtraining &lt;- training[inTrain, ]
 subtesting &lt;- training[-inTrain, ]</code></pre>
 <p>The subtraining set will now be used to do model fitting, while the subtesting set will be used for validation of the model fit later.</p>
-<pre class="r"><code>modFit &lt;- train(classe ~ ., data = subtraining, method = &quot;rf&quot;, prox = TRUE)
+<pre class="r"><code>modFit &lt;- train(classe ~ ., data = subtraining, method = &quot;rf&quot;, prox = TRUE, ntree = 250)
 modFit</code></pre>
 <pre><code>## Random Forest 
 ## 
@@ -121,16 +121,48 @@ modFit</code></pre>
 ## Resampling results across tuning parameters:
 ## 
 ##   mtry  Accuracy   Kappa      Accuracy SD  Kappa SD   
-##    2    0.9885928  0.9855695  0.002085619  0.002631029
-##   27    0.9884519  0.9853907  0.002122876  0.002687164
-##   52    0.9812465  0.9762766  0.004571578  0.005779757
+##    2    0.9866611  0.9831178  0.002056679  0.002602307
+##   27    0.9875308  0.9842193  0.001816974  0.002297739
+##   52    0.9820784  0.9773198  0.003110344  0.003933919
 ## 
 ## Accuracy was used to select the optimal model using  the largest value.
-## The final value used for the model was mtry = 2.</code></pre>
+## The final value used for the model was mtry = 27.</code></pre>
 <p>As can be seen from the table above, the accuracy of the randomforest method is quite accurate. But let’s test it on the testing set that we have.</p>
 <pre class="r"><code>pred &lt;- predict(modFit, subtesting)
-CM &lt;- confusionMatrix(subtesting$classe, pred)</code></pre>
-<p>Performing the prediction on the testing set, and looking at the confusion matrix, the accuracy of the model is <code>CM$overall[1]</code>%.</p>
+CM &lt;- confusionMatrix(subtesting$classe, pred)
+CM</code></pre>
+<pre><code>## Confusion Matrix and Statistics
+## 
+##           Reference
+## Prediction    A    B    C    D    E
+##          A 1673    1    0    0    0
+##          B    3 1133    3    0    0
+##          C    0    8 1018    0    0
+##          D    0    0    9  955    0
+##          E    0    0    3    2 1077
+## 
+## Overall Statistics
+##                                           
+##                Accuracy : 0.9951          
+##                  95% CI : (0.9929, 0.9967)
+##     No Information Rate : 0.2848          
+##     P-Value [Acc &gt; NIR] : &lt; 2.2e-16       
+##                                           
+##                   Kappa : 0.9938          
+##  Mcnemar's Test P-Value : NA              
+## 
+## Statistics by Class:
+## 
+##                      Class: A Class: B Class: C Class: D Class: E
+## Sensitivity            0.9982   0.9921   0.9855   0.9979   1.0000
+## Specificity            0.9998   0.9987   0.9984   0.9982   0.9990
+## Pos Pred Value         0.9994   0.9947   0.9922   0.9907   0.9954
+## Neg Pred Value         0.9993   0.9981   0.9969   0.9996   1.0000
+## Prevalence             0.2848   0.1941   0.1755   0.1626   0.1830
+## Detection Rate         0.2843   0.1925   0.1730   0.1623   0.1830
+## Detection Prevalence   0.2845   0.1935   0.1743   0.1638   0.1839
+## Balanced Accuracy      0.9990   0.9954   0.9919   0.9980   0.9995</code></pre>
+<p>Performing the prediction on the testing set, and looking at the confusion matrix, the accuracy of the model is <code>CM$overall[1]</code>%, and the out of sample error is simply 1 - accuracy, <code>1 - CM$overall[1]</code>%.</p>
 <div id="prediction-of-original-test-set" class="section level2">
 <h2>Prediction of Original Test Set</h2>
 <p>Before predicting, the column for problem_id was removed, since it will affect negatively the prediction.</p>

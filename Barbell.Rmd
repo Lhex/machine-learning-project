@@ -65,7 +65,7 @@ subtesting <- training[-inTrain, ]
 The subtraining set will now be used to do model fitting, while the subtesting set will be used for validation of the model fit later.
 
 ```{r modelFitting}
-modFit <- train(classe ~ ., data = subtraining, method = "rf", prox = TRUE)
+modFit <- train(classe ~ ., data = subtraining, method = "rf", prox = TRUE, ntree = 250)
 modFit
 ```
 
@@ -74,9 +74,10 @@ As can be seen from the table above, the accuracy of the randomforest method is 
 ```{r subtesting}
 pred <- predict(modFit, subtesting)
 CM <- confusionMatrix(subtesting$classe, pred)
+CM
 ```
 
-Performing the prediction on the testing set, and looking at the confusion matrix, the accuracy of the model is `CM$overall[1]`%.
+Performing the prediction on the testing set, and looking at the confusion matrix, the accuracy of the model is `CM$overall[1]`%, and the out of sample error is simply 1 - accuracy, `1 - CM$overall[1]`%.
 
 ##Prediction of Original Test Set
 
@@ -95,22 +96,4 @@ prp(tree)
 ```
 
 ```{r appendix, echo=FALSE, eval=FALSE}
-# trCarlitos <- training[ training$user_name == "carlitos",]
-# # trCarlitos$classe <- as.factor(trCarlitos$classe)
-# trCarlitos <- subset(trCarlitos, select = -c(1:7))
-# trCarlitos <- trCarlitos[, colSums(is.na(trCarlitos))==0]
-# classe <- trCarlitos$classe
-# trCarlitos <- trCarlitos[, sapply(trCarlitos, is.numeric)]
-# trCarlitos$classe <- classe
-# 
-# inTrain = createDataPartition(trCarlitos$classe, p = 0.7, list = FALSE)
-# carlitosTraining = trCarlitos[ inTrain,]
-# carlitosTesting = trCarlitos[-inTrain,]
-# 
-# modFit <- train(classe ~ ., data = carlitosTraining, method = "rf", prox = TRUE)
-# modFit
-# 
-# pred <- predict(modFit, carlitosTesting)
-# table(pred, carlitosTesting$classe)
-# confusionMatrix(carlitosTesting$classe, pred)
 ```
